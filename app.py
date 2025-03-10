@@ -1,33 +1,26 @@
 import streamlit as st
-import requests
+import time
 
-# GitHub API setup
-GITHUB_API_URL = "https://api.github.com/repos/philberthung/project/issues"
-GITHUB_TOKEN = "YOUR_GITHUB_TOKEN"  # Replace with your GitHub token
-
-# Function to create a GitHub issue
-def create_github_issue(title, body):
-    headers = {
-        "Authorization": f"token {GITHUB_TOKEN}",
-        "Accept": "application/vnd.github.v3+json"
+# CSS to hide the sidebar
+css = '''
+<style>
+    [data-testid="stSidebarNav"] {
+        display: none;
     }
-    issue = {
-        "title": title,
-        "body": body
-    }
-    response = requests.post(GITHUB_API_URL, json=issue, headers=headers)
-    return response
+</style>
+'''
+st.markdown(css, unsafe_allow_html=True)
 
-# Streamlit app layout
-st.title("Student Input Form")
-student_input = st.text_area("Write your input here:")
+def main():
+    st.title("Page 2")
+    st.write("Welcome to Page 2!")
 
-if st.button("Submit"):
-    if student_input:
-        response = create_github_issue("Student Input", student_input)
-        if response.status_code == 201:
-            st.success("Issue created successfully!")
-        else:
-            st.error("Failed to create issue. Please try again.")
-    else:
-        st.warning("Please enter something before submitting.")
+    # No need to clear the sidebar since it's hidden
+    # st.sidebar.empty()
+
+    if st.button("Go to Page 1"):
+        st.switch_page("test/login.py")
+        time.sleep(1)
+
+if __name__ == "__main__":
+    main()
