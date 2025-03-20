@@ -3,7 +3,7 @@ import requests
 from datetime import datetime
 
 # Your GitHub personal access token
-GITHUB_TOKEN = ''
+
 REPO = 'philberthung/project'  # Replace with your repository
 BASE_BRANCH = 'main'  # The base branch for the pull request
 HEAD_BRANCH = 'feature-branch'  # The branch you're merging from
