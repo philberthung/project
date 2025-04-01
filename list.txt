@@ -87,3 +87,5 @@ student, 21000001D, password2
 student, 21000001D, password2
 student, 21000001D, password2
 student, 21000001D, password2
+student, 21000001D, password2
+teacher, 21000000D, password1
