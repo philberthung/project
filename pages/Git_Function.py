@@ -90,6 +90,17 @@ def create_issue(title, body):
 # Streamlit UI
 st.title("GitHub Project Management")
 
+# Sidebar for User Role and Logout
+with st.sidebar:
+    st.header("User Role")
+    st.write(f"Role: teacher")  # Display role in sidebar
+    if st.button("Logout"):
+        st.session_state.logged_in = False
+        st.session_state.role = None
+        st.session_state.permission = None
+        st.session_state.netid = None
+        st.switch_page("Login_Page.py")
+
 # Create a Milestone section
 st.header("Create a Milestone")
 milestone_title = st.text_input("Milestone Title")
@@ -122,11 +133,3 @@ if st.button("Create Issue"):
             st.error(f"Error creating Issue: {result.get('message', 'Unknown error')}")
     else:
         st.error("Please enter an issue title.")
-
-# Sidebar logout
-if st.sidebar.button("Logout"):
-    st.session_state.logged_in = False
-    st.session_state.role = None
-    st.session_state.permission = None
-    st.session_state.netid = None
-    st.switch_page("Login_Page.py")
