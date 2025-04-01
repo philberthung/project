@@ -33,12 +33,12 @@ role = st.session_state.role
 permission = st.session_state.permission
 
 # GitHub API setup
-GITHUB_TOKEN = ''  # Replace with your token
-REPO = 'philberthung/project'  # Replace with your repository
-headers = {
-    'Authorization': f'token {GITHUB_TOKEN}',
-    'Accept': 'application/vnd.github.v3+json',
-}
+#GITHUB_TOKEN = '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'  # Replace with your token
+#REPO = 'philberthung/project'  # Replace with your repository
+#headers = {
+#    'Authorization': f'token {GITHUB_TOKEN}',
+#    'Accept': 'application/vnd.github.v3+json',
+#}
 
 # Get GitHub milestones list
 def get_github_milestones():

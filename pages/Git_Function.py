@@ -29,12 +29,12 @@ netid = st.session_state.get("netid", None)
 role = st.session_state.role
 
 # GitHub API setup
-GITHUB_TOKEN = ''  # Replace with your token
-REPO = 'philberthung/project'  # Replace with your repository
-headers = {
-    'Authorization': f'token {GITHUB_TOKEN}',
-    'Accept': 'application/vnd.github.v3+json',
-}
+#GITHUB_TOKEN = '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'  # Replace with your token
+#REPO = 'philberthung/project'  # Replace with your repository
+#headers = {
+#    'Authorization': f'token {GITHUB_TOKEN}',
+#    'Accept': 'application/vnd.github.v3+json',
+#}
 
 # Function to create a GitHub milestone and sync with MongoDB
 def create_milestone(title, description, due_date):
