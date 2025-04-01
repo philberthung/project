@@ -73,7 +73,7 @@ def create_milestone(title, description, due_date):
     else:
         return {"success": False, "message": response.json().get("message", "Unknown error")}
 
-# Function to create a GitHub issue (copied from GIt_Function.py)
+# Function to create a GitHub issue
 def create_issue(title, body):
     if not GITHUB_TOKEN:
         st.error("GitHub Token is not set. Please configure it in your system environment variables.")
@@ -86,8 +86,6 @@ def create_issue(title, body):
     }
     response = requests.post(url, json=issue_data, headers=headers)
     return response.json()
-
-
 
 # Streamlit UI
 st.title("GitHub Project Management")
@@ -109,13 +107,15 @@ if st.button("Create Milestone"):
 
 st.markdown("---")  # Separator line
 
-# Create an Issue section (added from GIt_Function.py)
+# Create an Issue section
 st.header("Create an Issue")
 issue_title = st.text_input("Issue Title", key='issue_title')
 issue_body = st.text_area("Issue Body", key='issue_body')
 if st.button("Create Issue"):
     if issue_title:
-        result = create_issue(issue_title, issue_body)
+        # Append the netid to the issue body to indicate the creator
+        full_body = f"Created by: {netid}\n\n{issue_body}"
+        result = create_issue(issue_title, full_body)
         if 'html_url' in result:
             st.success(f"Issue created: {result['html_url']}")
         else:
@@ -123,11 +123,7 @@ if st.button("Create Issue"):
     else:
         st.error("Please enter an issue title.")
 
-# Sidebar to display role
-st.sidebar.title("User Role")
-st.sidebar.write(f"Role: {st.session_state.role}")
-
-# Logout button with redirect
+# Sidebar logout
 if st.sidebar.button("Logout"):
     st.session_state.logged_in = False
     st.session_state.role = None
