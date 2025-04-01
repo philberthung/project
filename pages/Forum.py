@@ -87,7 +87,8 @@ with tab1:
 # --- Group Forum ---
 with tab2:
     st.subheader(f"Group Forum (Group {group})")
-    if group.strip() == "":
+   # Ensure group is treated as a string
+    if str(group).strip() == "":
         st.warning("You are not assigned to a group yet.")
     else:
         st.write(f"Only members of Group {group} can post here.")

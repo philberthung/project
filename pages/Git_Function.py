@@ -87,6 +87,8 @@ def create_issue(title, body):
     response = requests.post(url, json=issue_data, headers=headers)
     return response.json()
 
+
+
 # Streamlit UI
 st.title("GitHub Project Management")
 
@@ -121,7 +123,11 @@ if st.button("Create Issue"):
     else:
         st.error("Please enter an issue title.")
 
-# Sidebar logout
+# Sidebar to display role
+st.sidebar.title("User Role")
+st.sidebar.write(f"Role: {st.session_state.role}")
+
+# Logout button with redirect
 if st.sidebar.button("Logout"):
     st.session_state.logged_in = False
     st.session_state.role = None
