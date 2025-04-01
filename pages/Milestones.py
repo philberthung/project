@@ -5,6 +5,7 @@ from pymongo.server_api import ServerApi
 from datetime import datetime
 import requests
 import pandas as pd
+import os
 
 # MongoDB connection
 uri = "mongodb+srv://nata:isd2025@isdcluster.jnn9ctb.mongodb.net/?appName=ISDcluster"
@@ -32,13 +33,17 @@ netid = st.session_state.get("netid", None)
 role = st.session_state.role
 permission = st.session_state.permission
 
-# GitHub API setup
-#GITHUB_TOKEN = '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'  # Replace with your token
-#REPO = 'philberthung/project'  # Replace with your repository
-#headers = {
-#    'Authorization': f'token {GITHUB_TOKEN}',
-#    'Accept': 'application/vnd.github.v3+json',
-#}
+# GitHub API setup using environment variable
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")  # Get token from system environment variable
+if not GITHUB_TOKEN:
+    st.error("GitHub Token is not set. Please configure it in your system environment variables.")
+    st.stop()
+
+REPO = 'philberthung/project'  # Replace with your repository
+headers = {
+    'Authorization': f'token {GITHUB_TOKEN}',
+    'Accept': 'application/vnd.github.v3+json',
+}
 
 # Get GitHub milestones list
 def get_github_milestones():
@@ -77,11 +82,11 @@ st.sidebar.write(f"Role: {st.session_state.role}")
 
 # Logout button
 if st.sidebar.button("Logout"):
-        st.session_state.logged_in = False
-        st.session_state.role = None
-        st.session_state.permission = None
-        st.session_state.netid = None
-        st.switch_page("Login_Page.py")
+    st.session_state.logged_in = False
+    st.session_state.role = None
+    st.session_state.permission = None
+    st.session_state.netid = None
+    st.switch_page("Login_Page.py")
 
 # --- Teacher Functions ---
 if role == "teacher":

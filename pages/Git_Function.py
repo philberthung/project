@@ -3,6 +3,7 @@ import requests
 from datetime import datetime
 from pymongo import MongoClient
 from pymongo.server_api import ServerApi
+import os
 
 # MongoDB connection
 uri = "mongodb+srv://nata:isd2025@isdcluster.jnn9ctb.mongodb.net/?appName=ISDcluster"
@@ -28,16 +29,24 @@ if "logged_in" not in st.session_state or not st.session_state.logged_in:
 netid = st.session_state.get("netid", None)
 role = st.session_state.role
 
-# GitHub API setup
-#GITHUB_TOKEN = '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'  # Replace with your token
-#REPO = 'philberthung/project'  # Replace with your repository
-#headers = {
-#    'Authorization': f'token {GITHUB_TOKEN}',
-#    'Accept': 'application/vnd.github.v3+json',
-#}
+# GitHub API setup using system environment variable
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")  # Get token from system environment variable
+if not GITHUB_TOKEN:
+    st.error("GitHub Token is not set. Please configure it in your system environment variables.")
+    st.stop()
+
+REPO = 'philberthung/project'  # Replace with your repository
+headers = {
+    'Authorization': f'token {GITHUB_TOKEN}',
+    'Accept': 'application/vnd.github.v3+json',
+}
 
 # Function to create a GitHub milestone and sync with MongoDB
 def create_milestone(title, description, due_date):
+    if not GITHUB_TOKEN:
+        st.error("GitHub Token is not set. Please configure it in your system environment variables.")
+        st.stop()
+    
     url = f'https://api.github.com/repos/{REPO}/milestones'
     milestone_data = {
         'title': title,
@@ -66,6 +75,10 @@ def create_milestone(title, description, due_date):
 
 # Function to create a GitHub issue (copied from GIt_Function.py)
 def create_issue(title, body):
+    if not GITHUB_TOKEN:
+        st.error("GitHub Token is not set. Please configure it in your system environment variables.")
+        st.stop()
+    
     url = f'https://api.github.com/repos/{REPO}/issues'
     issue_data = {
         'title': title,
