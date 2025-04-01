@@ -76,8 +76,8 @@ if not st.session_state.logged_in:
             st.session_state.logged_in = True
             st.rerun()
         
-    else:
-        st.error("Invalid username or password.")
+        else:
+            st.error("Invalid username or password.")
 
 else:
     # Role-specific content after successful login
@@ -85,6 +85,7 @@ else:
         st.write("You have access to teacher resources.")
         st.switch_page("pages/Assignment.py")  # Switch to teacher's page
         time.sleep(1)
+        
     elif st.session_state.role == "student":
         st.write("You have access to student resources.")
         # Switch based on permission
