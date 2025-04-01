@@ -33,7 +33,7 @@ role = st.session_state.role
 permission = st.session_state.permission
 
 # GitHub API setup
-GITHUB_TOKEN = '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'  # Replace with your token
+GITHUB_TOKEN = ''  # Replace with your token
 REPO = 'philberthung/project'  # Replace with your repository
 headers = {
     'Authorization': f'token {GITHUB_TOKEN}',
