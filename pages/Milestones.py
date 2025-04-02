@@ -23,7 +23,7 @@ db = client.students_database
 milestones_collection = db.milestones
 students_collection = db.students
 
-# Fetch user info from session state
+# Get user info from session state
 if "logged_in" not in st.session_state or not st.session_state.logged_in:
     st.error("Please log in first.")
     st.switch_page("Login_Page.py")
@@ -34,47 +34,10 @@ role = st.session_state.role
 permission = st.session_state.permission
 
 # GitHub API setup using environment variable
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")  # Get token from system environment variable
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 if not GITHUB_TOKEN:
-    st.error("GitHub Token is not set. Please configure it in your system environment variables.")
+    st.error("GitHub Token not configured. Please set it in system environment variables.")
     st.stop()
-
-REPO = 'philberthung/project'  # Replace with your repository
-headers = {
-    'Authorization': f'token {GITHUB_TOKEN}',
-    'Accept': 'application/vnd.github.v3+json',
-}
-
-# Get GitHub milestones list
-def get_github_milestones():
-    url = f'https://api.github.com/repos/{REPO}/milestones'
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        return {milestone['number']: milestone for milestone in response.json()}
-    else:
-        st.error(f"Failed to retrieve GitHub milestones: {response.status_code} - {response.text}")
-        return {}
-
-# Sync and delete milestones removed from GitHub
-def sync_milestones():
-    github_milestones = get_github_milestones()
-    mongo_milestones = list(milestones_collection.find({"github_id": {"$exists": True}}))
-    
-    for mongo_milestone in mongo_milestones:
-        github_id = mongo_milestone.get("github_id")
-        if github_id is not None and github_id not in github_milestones:
-            milestones_collection.delete_one({"_id": mongo_milestone["_id"]})
-            st.success(f"Deleted milestone '{mongo_milestone['title']}' from MongoDB as it no longer exists on GitHub.")
-
-# Perform synchronization (e.g., check every 60 seconds)
-if 'last_sync' not in st.session_state:
-    st.session_state.last_sync = datetime.now()
-if (datetime.now() - st.session_state.last_sync).total_seconds() > 60:
-    sync_milestones()
-    st.session_state.last_sync = datetime.now()
-
-# Milestones page
-st.title("Milestones")
 
 # Sidebar to display role and navigation
 st.sidebar.title("User Role")
@@ -88,11 +51,43 @@ if st.sidebar.button("Logout"):
     st.session_state.netid = None
     st.switch_page("Login_Page.py")
 
-# --- Teacher Functions ---
+# Get GitHub milestones list
+def get_github_milestones(repo):
+    url = f'https://api.github.com/repos/{repo}/milestones'
+    response = requests.get(url, headers={'Authorization': f'token {GITHUB_TOKEN}', 'Accept': 'application/vnd.github.v3+json'})
+    if response.status_code == 200:
+        return {milestone['number']: milestone for milestone in response.json()}
+    else:
+        st.error(f"Failed to get GitHub milestones for {repo}: {response.status_code} - {response.text}")
+        return {}
+
+# Sync and delete milestones removed from GitHub
+def sync_milestones():
+    repo = "philberthung/project"  # Hardcoded repository
+    github_milestones = get_github_milestones(repo)
+    mongo_milestones = list(milestones_collection.find({"github_id": {"$exists": True}}))
+    
+    for mongo_milestone in mongo_milestones:
+        github_id = mongo_milestone.get("github_id")
+        if github_id is not None and github_id not in github_milestones:
+            milestones_collection.delete_one({"_id": mongo_milestone["_id"]})
+            st.success(f"Deleted milestone '{mongo_milestone['title']}' from MongoDB as it no longer exists on GitHub.")
+
+# Execute sync
+if 'last_sync' not in st.session_state:
+    st.session_state.last_sync = datetime.now()
+if (datetime.now() - st.session_state.last_sync).total_seconds() > 60:
+    sync_milestones()
+    st.session_state.last_sync = datetime.now()
+
+# Milestones page
+st.title("Milestones")
+
+# --- Teacher Functionality ---
 if role == "teacher":
     st.subheader("Manage Milestones")
     with st.form("milestone_form", clear_on_submit=True):
-        title = st.text_input("Milestone Name")
+        title = st.text_input("Milestone Title")
         due_date = st.date_input("Due Date")
         description = st.text_area("Description")
         submit_milestone = st.form_submit_button("Add Milestone")
@@ -106,28 +101,38 @@ if role == "teacher":
                 "timestamp": datetime.now(),
                 "completions": {}
             }
-            milestones_collection.insert_one(milestone)
-            st.success("Milestone added successfully!")
+            # Create milestone on GitHub
+            repo = "philberthung/project"  # Hardcoded repository
+            url = f'https://api.github.com/repos/{repo}/milestones'
+            milestone_data = {
+                'title': title,
+                'description': description,
+                'due_on': due_date.isoformat() + 'T00:00:00Z',
+                'state': 'open',
+            }
+            response = requests.post(url, json=milestone_data, headers={'Authorization': f'token {GITHUB_TOKEN}', 'Accept': 'application/vnd.github.v3+json'})
+            if response.status_code == 201:
+                github_milestone = response.json()
+                milestone["github_id"] = github_milestone.get("number")
+                milestones_collection.insert_one(milestone)
+                st.success(f"Created milestone on GitHub and MongoDB: {github_milestone['html_url']}")
+            else:
+                st.error(f"Failed to create milestone on GitHub: {response.text}")
             time.sleep(1)
             st.rerun()
 
 # --- Display Milestones List ---
 st.subheader("All Milestones")
-# Sort by due_date (ascending, nearest at top), with timestamp as secondary sort, then separate no-date milestones
 milestones = list(milestones_collection.find().sort([("due_date", 1), ("timestamp", 1)]))
-# Filter milestones with a due date
 milestones_with_date = [m for m in milestones if m.get("due_date")]
-# Filter milestones without a due date
 milestones_without_date = [m for m in milestones if not m.get("due_date")]
-
-# Combine lists: milestones with dates (near to far), followed by those without dates
 sorted_milestones = milestones_with_date + milestones_without_date
 
 if not sorted_milestones:
-    st.write("No milestones available at the moment.")
+    st.write("No milestones available.")
 else:
     for milestone in sorted_milestones:
-        st.write(f"**{milestone['title']}** (Due Date: {milestone['due_date'] if milestone['due_date'] else 'Not set'})")
+        st.write(f"**{milestone['title']}** (Due: {milestone['due_date'] if milestone['due_date'] else 'Not set'}):")
         st.write(f"Description: {milestone['description'] if milestone['description'] else 'No description'}")
         st.write(f"Created by: {milestone['created_by']} ({milestone['timestamp'].strftime('%Y-%m-%d %H:%M:%S')})")
         if 'github_id' in milestone:
@@ -136,7 +141,7 @@ else:
         # Student completion marking
         if role == "student":
             completed = milestone["completions"].get(netid, False)
-            if st.checkbox(f"Mark as Completed (by {netid})", value=completed, key=f"complete_{milestone['_id']}"):
+            if st.checkbox(f"Mark as completed (by {netid})", value=completed, key=f"complete_{milestone['_id']}"):
                 if not completed:
                     milestones_collection.update_one(
                         {"_id": milestone["_id"]},
@@ -146,7 +151,7 @@ else:
                     time.sleep(1)
                     st.rerun()
             elif completed:
-                if st.button(f"Unmark Completion (by {netid})", key=f"uncomplete_{milestone['_id']}"):
+                if st.button(f"Unmark completion (by {netid})", key=f"uncomplete_{milestone['_id']}"):
                     milestones_collection.update_one(
                         {"_id": milestone["_id"]},
                         {"$set": {f"completions.{netid}": False}}
@@ -161,10 +166,10 @@ else:
             with col1:
                 if st.button("Edit", key=f"edit_{milestone['_id']}"):
                     with st.form(f"edit_form_{milestone['_id']}", clear_on_submit=True):
-                        new_title = st.text_input("New Name", value=milestone["title"])
-                        new_due_date = st.date_input("New Due Date", value=datetime.strptime(milestone["due_date"], "%Y-%m-%d") if milestone["due_date"] else None)
-                        new_description = st.text_area("New Description", value=milestone["description"])
-                        if st.form_submit_button("Save Changes"):
+                        new_title = st.text_input("New title", value=milestone["title"])
+                        new_due_date = st.date_input("New due date", value=datetime.strptime(milestone["due_date"], "%Y-%m-%d") if milestone["due_date"] else None)
+                        new_description = st.text_area("New description", value=milestone["description"])
+                        if st.form_submit_button("Save changes"):
                             milestones_collection.update_one(
                                 {"_id": milestone["_id"]},
                                 {"$set": {"title": new_title, "due_date": new_due_date.strftime("%Y-%m-%d") if new_due_date else None, "description": new_description}}
@@ -174,14 +179,18 @@ else:
                             st.rerun()
             with col2:
                 if st.button("Delete", key=f"delete_{milestone['_id']}"):
+                    # Delete from GitHub if exists
+                    if 'github_id' in milestone:
+                        delete_url = f'https://api.github.com/repos/philberthung/project/milestones/{milestone["github_id"]}'
+                        requests.delete(delete_url, headers={'Authorization': f'token {GITHUB_TOKEN}', 'Accept': 'application/vnd.github.v3+json'})
                     milestones_collection.delete_one({"_id": milestone["_id"]})
                     st.success("Milestone deleted!")
                     time.sleep(1)
                     st.rerun()
 
-        # Display completion status (visible to teachers only)
+        # Show completion status (visible only to teachers)
         if role == "teacher":
             completed_users = [user for user, status in milestone["completions"].items() if status]
-            st.write(f"Completed by: {', '.join(completed_users) if completed_users else 'No one has completed'}")
+            st.write(f"Completed by: {', '.join(completed_users) if completed_users else 'No one'}")
 
         st.divider()

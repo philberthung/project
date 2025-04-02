@@ -38,11 +38,11 @@ st.sidebar.write(f"Role: {st.session_state.role}")
 
 # Logout button
 if st.sidebar.button("Logout"):
-        st.session_state.logged_in = False
-        st.session_state.role = None
-        st.session_state.permission = None
-        st.session_state.netid = None
-        st.switch_page("Login_Page.py")
+    st.session_state.logged_in = False
+    st.session_state.role = None
+    st.session_state.permission = None
+    st.session_state.netid = None
+    st.switch_page("Login_Page.py")
 
 # Forum page
 st.title("Forum")
@@ -80,14 +80,13 @@ with tab1:
     for post in public_posts:
         st.write(f"**{post['netid']}** ({post['timestamp'].strftime('%Y-%m-%d %H:%M:%S')}):")
         st.write(post["message"])
-        if post["github_link"]:
-            st.write(f"[GitHub Link]({post['github_link']})")
+        if post.get("github_link"):  # 檢查 github_link 是否存在
+            st.write(f"[GitHub 連結]({post['github_link']})")
         st.divider()
 
 # --- Group Forum ---
 with tab2:
     st.subheader(f"Group Forum (Group {group})")
-   # Ensure group is treated as a string
     if str(group).strip() == "":
         st.warning("You are not assigned to a group yet.")
     else:
