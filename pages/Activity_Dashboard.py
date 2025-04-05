@@ -36,7 +36,7 @@ HEADERS = {
     "X-GitHub-Api-Version": "2022-11-28"
 }
 
-# API Helper Functions (unchanged)
+# API Helper Functions for getting api
 def safe_api_call(url, headers, description="data"):
     try:
         response = requests.get(url, headers=headers)
